@@ -2,46 +2,60 @@ pipeline {
     agent any
 
     stages {
+
         stage('Checkout Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/sumitsonwane31/myflaskapp'
+                git branch: 'master', url: 'https://github.com/shaanman23/my-flask-app.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                echo "Building Flask Docker Image..."
-                sh 'docker build -t myflaskapp .'
+                script {
+                    echo "Building Flask Docker Image..."
+                    bat "docker build -t myflaskapp:latest ."
+                }
             }
         }
 
         stage('Stop Old Container') {
             steps {
-                sh '''
-                    if [ $(docker ps -aq -f name=myflaskapp) ]; then
-                        docker stop myflaskapp || true
-                        docker rm myflaskapp || true
-                    fi
-                '''
+                script {
+                    echo "Stopping old container if exists..."
+                    bat "docker stop flaskdemo || exit 0"
+                    bat "docker rm flaskdemo || exit 0"
+                }
             }
         }
 
         stage('Run New Container') {
             steps {
-                sh 'docker run -d -p 5000:5000 --name myflaskapp myflaskapp'
+                script {
+                    echo "Running new container on port 5000..."
+                    bat "docker run -d --name flaskdemo -p 5000:5000 myflaskapp:latest"
+                }
             }
         }
 
         stage('Test Application') {
             steps {
-                sh 'curl http://localhost:5000'
+                script {
+                    echo "Waiting for app to start..."
+                    sleep(5)
+
+                    echo "Testing application on port 5000..."
+                    bat "curl http://localhost:5000"
+                }
             }
         }
 
         stage('Deploy Success') {
             steps {
-                echo 'Deployment completed successfully!'
+                echo "Flask App is running successfully at: http://localhost:5000"
             }
         }
     }
 }
+
+
+
